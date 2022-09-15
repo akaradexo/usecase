@@ -1,0 +1,109 @@
+org: akarade
+app: place-cart-serverless
+service: place-cart-serverless
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+
+
+functions:
+  placeCart:
+    handler: handler.index
+    role: placeCartRoleServerless
+    # Create the api gateway
+    events:
+      - http:
+          path: posts/create
+          method: post
+          cors: true
+          # Create the model schema
+          request:
+            schemas:
+              application/json:
+                schema: ${file(create_request.json)}
+                name: PostCreateModel
+                description: 'Validation model for Creating Posts'
+
+
+resources:
+  Resources:
+    # IAM role for place cart 
+    placeCartRoleServerless:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: placeCartRoleServerless
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        # IAM Policy for place cart 
+        Policies:
+          - PolicyName: place_cart_policy_serverless
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:*
+                    - dynamodb:*
+                    - ssm:*
+                  Resource: "*"
+    # SSM paramaters of Bucket name , file name , table name
+    cartDataBucketName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: cartDataBucketName
+        Type: String
+        Value: cartdiscount
+        Description: SSM Parameter for getting the s3 bucket name.
+    discountDataFileName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: discountDataFileName
+        Type: String
+        Value: discount.json
+        Description: SSM Parameter for getting the s3 file name.
+    cartDataDbName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: cartDataDbName
+        Type: String
+        Value: placeCartItems
+        Description: SSM Parameter for getting the s3 database name.
+    # Create Dynamo db table
+    placeCartItems:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          TableName: placeCartItems
+          AttributeDefinitions:
+            - AttributeName: cartId
+              AttributeType: S
+            - AttributeName: userId
+              AttributeType: S
+          KeySchema:
+            - AttributeName: cartId
+              KeyType: HASH
+            - AttributeName: userId
+              KeyType: RANGE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+    # Create SSM table
+    # cartdiscount: 
+    #   Type: AWS::S3::Bucket
+    #   Properties: 
+    #     BucketName: cartdiscount    
+    #     PublicAccessBlockConfiguration:
+    #       BlockPublicAcls: false
+    #       BlockPublicPolicy: false
+    #       IgnorePublicAcls: false
+    #       RestrictPublicBuckets: false
+
+        

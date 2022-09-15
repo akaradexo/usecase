@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title": "CartModel",
+    "type": "object",
+    "properties": {
+      "address": { "type": "string" },
+      "userId": { "type": "string" },
+      "phoneNumber": { "type": "string" },
+      "emailId": { "type": "string" },
+      "promoCode": { "type": "string" },
+      "items": {
+          "type": "array",
+          "items":{
+              "type":"object",
+              "properties": {
+                  "itemId": { "type": "string" },
+                  "quantity": { "type": "string" },
+                  "descriptionItem": { "type": "string" }
+              }
+          }
+      }
+    }
+  }
